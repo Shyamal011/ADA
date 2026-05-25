@@ -1,27 +1,45 @@
-def is_adjacent(current, next_cell):
-
-    r1, c1 = current
-    r2, c2 = next_cell
-
-    return abs(r1 - r2) + abs(c1 - c2) == 1
+from scoring import calculate_path_cost
 
 
-def add_to_path(path, clicked_cell, grid):
+class PlayerPath:
+    def __init__(self, start):
+        self.start = start
+        self.path = [start]
 
-    terrain = grid[clicked_cell[0]][clicked_cell[1]]
+    def reset(self):
+        self.path = [self.start]
 
-    if terrain == "water":
-        return path
+    @property
+    def current_cell(self):
+        return self.path[-1]
 
-    if len(path) == 0:
-        path.append(clicked_cell)
-        return path
+    def contains(self, cell):
+        return cell in self.path
 
-    last_cell = path[-1]
+    def handle_cell_click(self, cell, terrain_map):
+        if cell == self.current_cell:
+            return False
 
-    if is_adjacent(last_cell, clicked_cell):
+        if len(self.path) >= 2 and cell == self.path[-2]:
+            self.path.pop()
+            return True
 
-        if clicked_cell not in path:
-            path.append(clicked_cell)
+        if not terrain_map.is_passable(cell):
+            return False
+        if not self.is_adjacent(cell, self.current_cell):
+            return False
+        if cell in self.path:
+            return False
 
-    return path
+        self.path.append(cell)
+        return True
+
+    def has_reached_end(self, end):
+        return self.current_cell == end
+
+    def cost(self, grid):
+        return calculate_path_cost(self.path, grid)
+
+    @staticmethod
+    def is_adjacent(first, second):
+        return abs(first[0] - second[0]) + abs(first[1] - second[1]) == 1
